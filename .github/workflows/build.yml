@@ -39,11 +39,26 @@ jobs:
           
           echo "🔧 Patching Android build configuration..."
           if [ -f "android/build.gradle" ]; then
-            # إجبار إعدادات أندرويد على التعرف على خصائص فلاتر في الحزم الفرعية
-            if ! grep -q "evaluationDependsOn" android/build.gradle; then
-              echo -e "\nsubprojects {\n    project.evaluationDependsOn(':app')\n}" >> android/build.gradle
-              echo "✅ Patch applied successfully!"
-            fi
+            cat << 'EOF' >> android/build.gradle
+
+          allprojects {
+              ext.flutter = [
+                  compileSdkVersion: 35,
+                  targetSdkVersion: 35,
+                  minSdkVersion: 21
+              ]
+          }
+          subprojects {
+              afterEvaluate { project ->
+                  if (project.hasProperty('android')) {
+                      project.android {
+                          compileSdkVersion 35
+                      }
+                  }
+              }
+          }
+          EOF
+            echo "✅ Global Android Patch applied successfully!"
           fi
 
           echo "📥 Getting Flutter packages..."
