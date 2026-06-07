@@ -28,7 +28,7 @@ jobs:
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5' # تثبيت الإصدار المتوافق تماماً مع مشروعك
+          flutter-version: '3.24.5'
 
       - name: Install Dependencies and Build APK
         run: |
@@ -37,6 +37,15 @@ jobs:
             cd wasl_talabi
           fi
           
+          echo "🔧 Patching Android build configuration..."
+          if [ -f "android/build.gradle" ]; then
+            # إجبار إعدادات أندرويد على التعرف على خصائص فلاتر في الحزم الفرعية
+            if ! grep -q "evaluationDependsOn" android/build.gradle; then
+              echo -e "\nsubprojects {\n    project.evaluationDependsOn(':app')\n}" >> android/build.gradle
+              echo "✅ Patch applied successfully!"
+            fi
+          fi
+
           echo "📥 Getting Flutter packages..."
           flutter pub get
           
