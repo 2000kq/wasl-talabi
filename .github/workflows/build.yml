@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK (Flutter)
 
 on:
   workflow_dispatch:
@@ -11,47 +11,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract Project ZIP (if exists)
+      - name: Extract Project ZIP
         run: |
           sudo apt-get install -y unzip
           if ls *.zip 1> /dev/null 2>&1; then
             echo "✅ ZIP file found, extracting..."
             unzip -o *.zip
-          else
-            echo "⚠️ No ZIP file found in the root directory."
           fi
 
-      - name: Set up JDK 17
+      - name: Set up Java (JDK 17)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Find and Build with Gradle
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Dependencies and Build APK
         run: |
-          # البحث عن ملف الجرادل في أي مكان داخل المستودع
-          GRADLEW_PATH=$(find . -name gradlew | head -n 1)
-          
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "❌ Error: gradlew file not found anywhere!"
-            echo "Here is the current list of files in your repository:"
-            ls -R
-            exit 1
+          # الدخول لمجلد المشروع إذا كان مستخرجاً داخل مجلد فرعي
+          if [ -d "wasl_talabi" ]; then
+            cd wasl_talabi
           fi
           
-          GRADLEW_DIR=$(dirname "$GRADLEW_PATH")
-          echo "✅ Found gradlew at: $GRADLEW_PATH"
-          chmod +x "$GRADLEW_PATH"
+          echo "📥 Getting Flutter packages..."
+          flutter pub get
           
-          cd "$GRADLEW_DIR"
-          ./gradlew assembleDebug
-
-          # نقل ملف الـ APK الناتج إلى المسار الرئيسي لسهولة التحميل
-          mkdir -p $GITHUB_WORKSPACE/output-apk/
-          find . -name "*.apk" -exec cp {} $GITHUB_WORKSPACE/output-apk/ \;
+          echo "🚀 Building APK..."
+          flutter build apk --debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: wasl-talabi-apk
-          path: output-apk/
+          path: "**/build/app/outputs/flutter-apk/*.apk"
