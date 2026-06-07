@@ -37,6 +37,9 @@ jobs:
             cd wasl_talabi
           fi
           
+          echo "🔧 Fixing dependency conflict for intl package..."
+          flutter pub add intl:^0.20.2
+          
           echo "📥 Getting Flutter packages..."
           flutter pub get
           
